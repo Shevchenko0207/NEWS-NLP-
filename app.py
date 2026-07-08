@@ -46,10 +46,14 @@ st.sidebar.header("Please select the Function")
 s_nlp = st.sidebar.selectbox("Functions", NLP_FUNCTIONS)
 
 
+MAX_ARTICLES = 20  # обмеження, щоб не перевищувати ліміт пам'яті на Streamlit Cloud
+
+
 @st.cache_data(show_spinner="Завантаження та обробка статей...")
 def load_and_prepare(news_source: str):
     feed_url = NEWS_SOURCES[news_source]
     df = load_rss_feed(feed_url)
+    df = df.head(MAX_ARTICLES)  # обробляємо тільки перші N статей
     df = attach_full_text(df)
     df["title"] = preprocess(df["title"])
     df = df.dropna()

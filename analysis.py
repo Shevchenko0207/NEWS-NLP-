@@ -94,11 +94,20 @@ def most_common_named_entities(text_series, entity="PERSON", top_n=10):
     """Повертає список (сутність, кількість) найпоширеніших сутностей заданого типу."""
     nlp_model = load_spacy_model()
 
-    def _entities(text):
-        doc = nlp_model(text)
-        return [ent.text for ent in doc.ents if ent.label_ == entity]
+    all_entities = []
+    # nlp.pipe обробляє тексти пакетно й економніше по пам'яті/CPU,
+    # ніж виклик nlp(text) по одному в циклі. Вимикаємо компоненти
+    # конвеєра, які не потрібні для NER (parser, lemmatizer, tagger),
+    # щоб не витрачати пам'ять даремно.
+    disabled = [
+        name
+        for name in ("parser", "lemmatizer", "tagger", "attribute_ruler")
+        if name in nlp_model.pipe_names
+    ]
+    with nlp_model.select_pipes(disable=disabled):
+        for doc in nlp_model.pipe(text_series, batch_size=32):
+            all_entities.extend(ent.text for ent in doc.ents if ent.label_ == entity)
 
-    all_entities = [e for text in text_series for e in _entities(text)]
     from collections import Counter
     return Counter(all_entities).most_common(top_n)
 

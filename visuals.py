@@ -12,20 +12,39 @@ from wordcloud import WordCloud, STOPWORDS
 from analysis import sentiment_textblob, sentiment_vader
 
 
+@st.cache_data(show_spinner=False)
+def _generate_wordcloud_arrays(long_string: str):
+    """
+    Генерує 3 wordcloud-масиви один раз і кешує результат (за вмістом
+    тексту), щоб не перегенеровувати важкі зображення при кожному
+    рендері сторінки — це і економить пам'ять, і прискорює UI.
+    Розмір зменшено з 1500x1000 до 900x500, бо великі зображення
+    сильно навантажують пам'ять на безкоштовному тарифі Streamlit Cloud.
+    """
+    wc1 = WordCloud(
+        width=900, height=500, background_color="white",
+        max_words=2000, contour_width=3, contour_color="steelblue",
+    ).generate(long_string)
+
+    wc2 = WordCloud(
+        width=900, height=500, random_state=1, background_color="salmon",
+        colormap="Pastel1", collocations=False, stopwords=STOPWORDS,
+    ).generate(long_string)
+
+    wc3 = WordCloud(
+        width=900, height=500, random_state=1, background_color="black",
+        colormap="Set2", collocations=False, stopwords=STOPWORDS,
+    ).generate(long_string)
+
+    return wc1.to_array(), wc2.to_array(), wc3.to_array()
+
+
 def show_wordcloud(titles: pd.Series):
     long_string = ",".join(list(titles.values))
-
-    wc = WordCloud(background_color="white", max_words=5000, contour_width=3, contour_color="steelblue")
-    wc.generate(long_string)
-    st.image(wc.to_array(), width=700, caption="WordCloud (white)")
-
-    wc = WordCloud(width=1500, height=1000, random_state=1, background_color="salmon",
-                    colormap="Pastel1", collocations=False, stopwords=STOPWORDS).generate(long_string)
-    st.image(wc.to_array(), width=700, caption="WordCloud (salmon)")
-
-    wc = WordCloud(width=1500, height=1000, random_state=1, background_color="black",
-                    colormap="Set2", collocations=False, stopwords=STOPWORDS).generate(long_string)
-    st.image(wc.to_array(), width=700, caption="WordCloud (black)")
+    img_white, img_salmon, img_black = _generate_wordcloud_arrays(long_string)
+    st.image(img_white, width=700, caption="WordCloud (white)")
+    st.image(img_salmon, width=700, caption="WordCloud (salmon)")
+    st.image(img_black, width=700, caption="WordCloud (black)")
 
 
 def show_ngram_table_and_chart(common_words, label: str):
@@ -47,6 +66,7 @@ def show_sentiment_barchart(text_series: pd.Series, method="TextBlob"):
     fig, ax = plt.subplots()
     ax.bar(counts.index, counts.values, color=["cyan", "red", "green", "black"], edgecolor="yellow")
     st.pyplot(fig)
+    plt.close(fig)
 
 
 def show_entity_barchart(entity_counts, entity_label="PERSON"):
@@ -57,6 +77,7 @@ def show_entity_barchart(entity_counts, entity_label="PERSON"):
     fig, ax = plt.subplots()
     sns.barplot(x=list(counts), y=list(names), ax=ax).set_title(entity_label)
     st.pyplot(fig)
+    plt.close(fig)
 
 
 def show_pos_barchart(pos_counts):
@@ -67,6 +88,7 @@ def show_pos_barchart(pos_counts):
     fig, ax = plt.subplots()
     sns.barplot(x=list(counts), y=list(tags), ax=ax)
     st.pyplot(fig)
+    plt.close(fig)
 
 
 def show_topics(topics):
