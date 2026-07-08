@@ -1,5 +1,7 @@
 # News Articles Analysis — NLP App
 
+🔗 **Live demo:** https://news-nlp-igor.streamlit.app/
+
 A Streamlit app for analyzing news articles using NLP techniques. It fetches
 articles from the RSS feed of a selected publication, scrapes the full
 article text, and provides several types of text analysis: n-grams,
