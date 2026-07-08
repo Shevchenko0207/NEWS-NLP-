@@ -113,6 +113,7 @@ def ensure_nltk_pos_data():
     тому пробуємо обидві назви.
     """
     nltk.download("punkt", quiet=True)
+    nltk.download("punkt_tab", quiet=True)
     for resource in ("averaged_perceptron_tagger", "averaged_perceptron_tagger_eng"):
         try:
             nltk.download(resource, quiet=True)
@@ -153,10 +154,26 @@ def topic_modeling(content_series, n_topics=10, n_words=6):
     return topics
 
 
+@st.cache_resource
+def ensure_punkt_data():
+    """
+    Довантажує ресурси токенізації речень NLTK, потрібні для sumy.
+    Новіші версії NLTK використовують 'punkt_tab' замість старого 'punkt',
+    тому пробуємо довантажити обидва.
+    """
+    for resource in ("punkt", "punkt_tab"):
+        try:
+            nltk.download(resource, quiet=True)
+        except Exception:
+            pass
+    return True
+
+
 def summarize_text(text, sentence_count=3):
     """Повертає список речень-резюме для одного тексту."""
     if not text.strip():
         return []
+    ensure_punkt_data()
     parser = PlaintextParser.from_string(text, Tokenizer("english"))
     summarizer = LexRankSummarizer()
     summary = summarizer(parser.document, sentence_count)
