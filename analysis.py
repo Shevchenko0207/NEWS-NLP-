@@ -100,7 +100,6 @@ def most_common_named_entities(text_series, entity="PERSON", top_n=10):
 
     all_entities = [e for text in text_series for e in _entities(text)]
     from collections import Counter
-
     return Counter(all_entities).most_common(top_n)
 
 
@@ -134,14 +133,29 @@ def most_common_pos_tags(text_series, top_n=7):
 
     tags = [t for text in text_series for t in _pos(text)]
     from collections import Counter
-
     return Counter(tags).most_common(top_n)
 
 
 def topic_modeling(content_series, n_topics=10, n_words=6):
-    """Повертає список рядків: топ-слова для кожної теми (LDA)."""
-    vectorizer = CountVectorizer(stop_words="english")
-    count_data = vectorizer.fit_transform(content_series)
+    """
+    Повертає список рядків: топ-слова для кожної теми (LDA).
+    Якщо в текстах недостатньо реальних слів (наприклад, скрапінг
+    повного тексту не вдався і content порожній), повертає порожній
+    список замість падіння з ValueError.
+    """
+    non_empty = content_series[content_series.str.strip().astype(bool)]
+    if non_empty.empty:
+        return []
+
+    try:
+        vectorizer = CountVectorizer(stop_words="english")
+        count_data = vectorizer.fit_transform(non_empty)
+    except ValueError:
+        return []
+
+    n_topics = min(n_topics, count_data.shape[0])
+    if n_topics < 1:
+        return []
 
     lda = LDA(n_components=n_topics, n_jobs=-1)
     lda.fit(count_data)

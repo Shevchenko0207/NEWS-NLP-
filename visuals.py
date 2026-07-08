@@ -70,6 +70,12 @@ def show_pos_barchart(pos_counts):
 
 
 def show_topics(topics):
+    if not topics:
+        st.write(
+            "Not enough article content to build topics "
+            "(full text extraction may have failed for this source)."
+        )
+        return
     st.write("Topics:")
     for topic in topics:
         st.write(topic)
