@@ -1,0 +1,15 @@
+streamlit
+pandas
+nltk
+feedparser
+requests
+beautifulsoup4
+matplotlib
+seaborn
+plotly
+wordcloud
+spacy
+textblob
+scikit-learn
+sumy
+textstat
